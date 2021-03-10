@@ -29,16 +29,18 @@ int main(int argv, char* argc[]){
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	//A Vertex Array Object: Keeps track of some state for us so we can
-	//	easily draw our triangle more than once.
+	//	easily draw our rectangle more than once.
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO); //Bind it so we can put the forthcoming triangle in it.
+				//As long as it's bound, it'll remember the VBO and EBO stuff we define.
 
-	//A simple triangle
+	//A simple rectangle made of two triangles
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f
 	};
 	unsigned int VBO; // A vertex buffer object id
 	glGenBuffers(1, &VBO);
@@ -54,6 +56,16 @@ int main(int argv, char* argc[]){
 		       	3 * sizeof(float), //Stride: The space between consecutive vertex attributes
 		       	(void*)0); //Offset of where data begins in the buffer
 	glEnableVertexAttribArray(0);
+
+	//But how do we break the rectangle up into triangles? Like this:
+	unsigned int indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+	unsigned int EBO; //An Element Buffer Object tells us which of the VBO vertices to draw in what order.
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	// Here we can unbind our VAO and make + bind the next one if we have more objects.
 
 	
@@ -125,7 +137,9 @@ int main(int argv, char* argc[]){
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices
+		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
+		glBindVertexArray(0);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
