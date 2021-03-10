@@ -96,6 +96,26 @@ int main(int argv, char* argc[]){
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
 		std::cout << "ERROR: Fragment shader compilation failed:\n" << infoLog << std::endl;
 	}
+
+
+	//Link the shaders into a shader program.
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+	//Check if linking failed:
+	//int success; (Already declared)
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if(!success){
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR: Shader program linkage failed:\n" << infoLog << std::endl;
+	}
+	//Clean up the no-longer-needed shader data.
+	glDeleteShader(vertexShader);
+	glDeleteShader(vertexShader);
+
+
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
