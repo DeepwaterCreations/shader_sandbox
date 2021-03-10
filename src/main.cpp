@@ -45,7 +45,7 @@ int main(int argv, char* argc[]){
 	//Send the data to our buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO); //Bind our buffer to GL_ARRAY_BUFFER.
 	//Copy the vertex data to the buffer currently bound to GL_ARRAY_BUFFER:
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //GL_DYNAMIC_DRAW if we expect this to change a lot.
 	//Specify the format of our vertex data
 	glVertexAttribPointer(0, //Location of starting attribute
 			3, //Size of a vertex attribute: 3 values for x, y, z
