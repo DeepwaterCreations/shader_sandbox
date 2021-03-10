@@ -55,6 +55,27 @@ int main(int argv, char* argc[]){
 		       	(void*)0); //Offset of where data begins in the buffer
 	glEnableVertexAttribArray(0);
 	// Here we can unbind our VAO and make + bind the next one if we have more objects.
+
+	
+	//Basic vertex shader that does nothing to the vertex.
+	//We just need to assign a w value of 1.0 to the fourth vertex position.
+	const char* vertexShaderSource = "#version 330 core\n"
+		"layout(location = 0) in vec3 aPos;\n"
+		"void main(){\n"
+		"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"}\0";
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	//Check if compilation was successful:
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if(!success){
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR: Vertex shader compilation failed:\n" << infoLog << std::endl;
+	}
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
