@@ -76,6 +76,26 @@ int main(int argv, char* argc[]){
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
 		std::cout << "ERROR: Vertex shader compilation failed:\n" << infoLog << std::endl;
 	}
+
+
+	//Basic fragment shader that outputs the same color no matter what.
+	const char* fragmentShaderSource = "#version 330 core\n"
+		"out vec4 FragColor;\n"
+		"void main(){\n"
+		"	FragColor = vec4(1.0f, 0.1f, 1.0f, 1.0f);\n"
+		"}\0";
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	//Check if compilation was successful:
+	//int success; (Already declared, but I'm leaving this here in case I move this elsewhere) 
+	//char infoLog[512];
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if(!success){
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR: Fragment shader compilation failed:\n" << infoLog << std::endl;
+	}
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
