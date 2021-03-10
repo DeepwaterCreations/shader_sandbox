@@ -26,6 +26,12 @@ int main(int argv, char* argc[]){
 	glViewport(0,0,800,600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	//A Vertex Array Object: Keeps track of some state for us so we can
+	//	easily draw our triangle more than once.
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO); //Bind it so we can put the forthcoming triangle in it.
+
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
