@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
 
 int main(int argv, char* argc[]){
 	glfwInit();
@@ -27,8 +28,10 @@ int main(int argv, char* argc[]){
 
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
-		glfwSwapBuffers(window);
+		processInput(window);
+
 		glfwPollEvents();
+		glfwSwapBuffers(window);
 	}
 
 
@@ -39,4 +42,10 @@ int main(int argv, char* argc[]){
 //Callback for when the window is resized
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0,0,width,height);
+}
+
+void processInput(GLFWwindow* window){
+	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
+		glfwSetWindowShouldClose(window, true);
+	}
 }
