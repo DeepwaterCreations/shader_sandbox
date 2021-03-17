@@ -38,10 +38,11 @@ int main(int argv, char* argc[]){
 
 	//A simple rectangle made of two triangles
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
+		//positions	 //colors
+		 0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
 	};
 	unsigned int VBO; // A vertex buffer object id
 	glGenBuffers(1, &VBO);
@@ -50,13 +51,17 @@ int main(int argv, char* argc[]){
 	//Copy the vertex data to the buffer currently bound to GL_ARRAY_BUFFER:
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //GL_DYNAMIC_DRAW if we expect this to change a lot.
 	//Specify the format of our vertex data
+	//Position attribute
 	glVertexAttribPointer(0, //Location of starting attribute
 			3, //Size of a vertex attribute: 3 values for x, y, z
 			GL_FLOAT, //Type of the data
 		       	GL_FALSE, //Does the data need to be converted to floats?
-		       	3 * sizeof(float), //Stride: The space between consecutive vertex attributes
+		       	6 * sizeof(float), //Stride: The space between consecutive vertex attributes
 		       	(void*)0); //Offset of where data begins in the buffer
 	glEnableVertexAttribArray(0);
+	//Color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	//But how do we break the rectangle up into triangles? Like this:
 	unsigned int indices[] = {
@@ -73,11 +78,12 @@ int main(int argv, char* argc[]){
 	//Basic vertex shader that does nothing to the vertex.
 	//We just need to assign a w value of 1.0 to the fourth vertex position.
 	const char* vertexShaderSource = "#version 330 core\n"
-		"layout(location = 0) in vec3 aPos;\n"
-		"out vec4 vertexColor;\n"
+		"layout(location = 0) in vec3 aPos; //Indices within attributes\n"
+		"layout(location = 1) in vec3 aColor;\n"
+		"out vec3 vertColor;\n"
 		"void main(){\n"
 		"	gl_Position = vec4(aPos, 1.0);\n"
-		"	vertexColor = vec4(0.0, 0.0, 0.5, 1.0);\n"
+		"	vertColor = aColor;\n"
 		"}\0";
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -96,9 +102,9 @@ int main(int argv, char* argc[]){
 	//Basic fragment shader that outputs the same color no matter what.
 	const char* fragmentShaderSource = "#version 330 core\n"
 		"out vec4 FragColor;\n"
-		"uniform vec4 someColor;\n"
+		"in vec3 vertColor;\n"
 		"void main(){\n"
-		"	FragColor = someColor;\n"
+		"	FragColor = vec4(vertColor, 1.0);\n"
 		"}\0";
 	unsigned int fragmentShader;
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
