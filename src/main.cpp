@@ -5,6 +5,8 @@
 #include <epoxy/glx.h>
 #include <GLFW/glfw3.h>
 
+#include "shaderprog.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
@@ -74,69 +76,7 @@ int main(int argv, char* argc[]){
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	// Here we can unbind our VAO and make + bind the next one if we have more objects.
 
-	
-	//Basic vertex shader that does nothing to the vertex.
-	//We just need to assign a w value of 1.0 to the fourth vertex position.
-	const char* vertexShaderSource = "#version 330 core\n"
-		"layout(location = 0) in vec3 aPos; //Indices within attributes\n"
-		"layout(location = 1) in vec3 aColor;\n"
-		"out vec3 vertColor;\n"
-		"void main(){\n"
-		"	gl_Position = vec4(aPos, 1.0);\n"
-		"	vertColor = aColor;\n"
-		"}\0";
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	//Check if compilation was successful:
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if(!success){
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR: Vertex shader compilation failed:\n" << infoLog << std::endl;
-	}
-
-
-	//Basic fragment shader that outputs the same color no matter what.
-	const char* fragmentShaderSource = "#version 330 core\n"
-		"out vec4 FragColor;\n"
-		"in vec3 vertColor;\n"
-		"void main(){\n"
-		"	FragColor = vec4(vertColor, 1.0);\n"
-		"}\0";
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	//Check if compilation was successful:
-	//int success; (Already declared, but I'm leaving this here in case I move this elsewhere) 
-	//char infoLog[512];
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if(!success){
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR: Fragment shader compilation failed:\n" << infoLog << std::endl;
-	}
-
-
-	//Link the shaders into a shader program.
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	//Check if linking failed:
-	//int success; (Already declared)
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if(!success){
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR: Shader program linkage failed:\n" << infoLog << std::endl;
-	}
-	//Clean up the no-longer-needed shader data.
-	glDeleteShader(vertexShader);
-	glDeleteShader(vertexShader);
-
+	ShaderProg shaderProg("/lair/ColdThings/shader_sandbox/src/shaders/vertex.glsl", "/lair/ColdThings/shader_sandbox/src/shaders/fragment.glsl");
 
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
@@ -145,12 +85,13 @@ int main(int argv, char* argc[]){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
+		shaderProg.use();
 
-		float timeValue = glfwGetTime();
-		float b = sin(timeValue)/2.0f + 0.5f;
-		int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor");
-		glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f);
+		/* float timeValue = glfwGetTime(); */
+		/* float b = sin(timeValue)/2.0f + 0.5f; */
+		/* shaderProg.setFloat("someColor", 1.0f); */
+		/* int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor"); */
+		/* glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f); */
 
 		glBindVertexArray(VAO);
 		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
