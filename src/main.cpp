@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include <epoxy/gl.h>
 #include <epoxy/glx.h>
@@ -95,9 +96,9 @@ int main(int argv, char* argc[]){
 	//Basic fragment shader that outputs the same color no matter what.
 	const char* fragmentShaderSource = "#version 330 core\n"
 		"out vec4 FragColor;\n"
-		"in vec4 vertexColor;\n"
+		"uniform vec4 someColor;\n"
 		"void main(){\n"
-		"	FragColor = vertexColor;\n"
+		"	FragColor = someColor;\n"
 		"}\0";
 	unsigned int fragmentShader;
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -139,6 +140,12 @@ int main(int argv, char* argc[]){
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shaderProgram);
+
+		float timeValue = glfwGetTime();
+		float b = sin(timeValue)/2.0f + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor");
+		glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f);
+
 		glBindVertexArray(VAO);
 		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
