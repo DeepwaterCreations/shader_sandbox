@@ -73,8 +73,10 @@ int main(int argv, char* argc[]){
 	//We just need to assign a w value of 1.0 to the fourth vertex position.
 	const char* vertexShaderSource = "#version 330 core\n"
 		"layout(location = 0) in vec3 aPos;\n"
+		"out vec4 vertexColor;\n"
 		"void main(){\n"
-		"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"	gl_Position = vec4(aPos, 1.0);\n"
+		"	vertexColor = vec4(0.0, 0.0, 0.5, 1.0);\n"
 		"}\0";
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -93,8 +95,9 @@ int main(int argv, char* argc[]){
 	//Basic fragment shader that outputs the same color no matter what.
 	const char* fragmentShaderSource = "#version 330 core\n"
 		"out vec4 FragColor;\n"
+		"in vec4 vertexColor;\n"
 		"void main(){\n"
-		"	FragColor = vec4(1.0f, 0.1f, 1.0f, 1.0f);\n"
+		"	FragColor = vertexColor;\n"
 		"}\0";
 	unsigned int fragmentShader;
 	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
