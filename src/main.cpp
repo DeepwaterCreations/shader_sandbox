@@ -5,6 +5,8 @@
 #include <epoxy/glx.h>
 #include <GLFW/glfw3.h>
 
+#include "stb_image.h"
+
 #include "shaderprog.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -30,6 +32,36 @@ int main(int argv, char* argc[]){
 	//Set up viewport
 	glViewport(0,0,800,600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	
+	//Load a texture using the stb_image library and put it in an OpenGL texture
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//Set texture wrapping/filtering options
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
+
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("textures/bluegrad.png", &width, &height, &nrChannels, 0);
+	if(data){
+		glTexImage2D(GL_TEXTURE_2D, //Texture target
+				0, //Mipmap level for if you want to do those manually. (instead of that, we generate them below.)
+				GL_RGB, //Texture storage format
+				width, //We got the width and height values from the image
+				height,//when we loaded it above, so we're using those.
+				0, //Always 0. Legacy thingy.
+				GL_RGB, //Source image format
+				GL_UNSIGNED_BYTE, //Source image data type
+				data); //The actual image data
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data); //We're done with the loaded image file now.
+
 
 	//A Vertex Array Object: Keeps track of some state for us so we can
 	//	easily draw our rectangle more than once.
@@ -40,11 +72,11 @@ int main(int argv, char* argc[]){
 
 	//A simple rectangle made of two triangles
 	float vertices[] = {
-		//positions	 //colors
-		 0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
-		 0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+		//positions	     //colors           //texture coordinates
+		 0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, //Top right
+		 0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 	1.0f, 0.0f, 
+		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f
 	};
 	unsigned int VBO; // A vertex buffer object id
 	glGenBuffers(1, &VBO);
@@ -58,12 +90,15 @@ int main(int argv, char* argc[]){
 			3, //Size of a vertex attribute: 3 values for x, y, z
 			GL_FLOAT, //Type of the data
 		       	GL_FALSE, //Does the data need to be converted to floats?
-		       	6 * sizeof(float), //Stride: The space between consecutive vertex attributes
+		       	8 * sizeof(float), //Stride: The space between consecutive vertex attributes
 		       	(void*)0); //Offset of where data begins in the buffer
 	glEnableVertexAttribArray(0);
 	//Color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
 	glEnableVertexAttribArray(1);
+	//Texture coord attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	//But how do we break the rectangle up into triangles? Like this:
 	unsigned int indices[] = {
@@ -75,6 +110,7 @@ int main(int argv, char* argc[]){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	// Here we can unbind our VAO and make + bind the next one if we have more objects.
+
 
 	ShaderProg shaderProg("/lair/ColdThings/shader_sandbox/src/shaders/vertex.glsl", "/lair/ColdThings/shader_sandbox/src/shaders/fragment.glsl");
 
@@ -93,6 +129,7 @@ int main(int argv, char* argc[]){
 		/* int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor"); */
 		/* glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f); */
 
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
 		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset

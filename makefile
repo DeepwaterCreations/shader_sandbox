@@ -4,7 +4,7 @@ vpath %.cpp src
 
 all: bin/shader_sandbox
 
-bin/shader_sandbox: main.o
+bin/shader_sandbox: main.o stb_image.o
 	$(CC) -o $@ $^ -l glfw -l epoxy
 
 %.o: %.cpp
