@@ -34,9 +34,9 @@ int main(int argv, char* argc[]){
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	
 	//Load a texture using the stb_image library and put it in an OpenGL texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	unsigned int texture0;
+	glGenTextures(1, &texture0);
+	glBindTexture(GL_TEXTURE_2D, texture0);
 
 	//Set texture wrapping/filtering options
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -45,6 +45,7 @@ int main(int argv, char* argc[]){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
 
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load("textures/bluegrad.png", &width, &height, &nrChannels, 0);
 	if(data){
 		glTexImage2D(GL_TEXTURE_2D, //Texture target
@@ -61,6 +62,22 @@ int main(int argv, char* argc[]){
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(data); //We're done with the loaded image file now.
+
+	//Second texture:
+	unsigned int texture1;
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
+	data = stbi_load("textures/mead_notebook_overlay.png", &width, &height, &nrChannels, 0);
+	if(data){
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
 
 
 	//A Vertex Array Object: Keeps track of some state for us so we can
@@ -113,6 +130,9 @@ int main(int argv, char* argc[]){
 
 
 	ShaderProg shaderProg("/lair/ColdThings/shader_sandbox/src/shaders/vertex.glsl", "/lair/ColdThings/shader_sandbox/src/shaders/fragment.glsl");
+	shaderProg.use();
+	shaderProg.setInt("texture0", 0);
+	shaderProg.setInt("texture1", 1);
 
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
@@ -129,7 +149,10 @@ int main(int argv, char* argc[]){
 		/* int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor"); */
 		/* glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f); */
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture1);
 		glBindVertexArray(VAO);
 		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
