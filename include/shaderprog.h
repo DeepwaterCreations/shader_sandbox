@@ -38,7 +38,7 @@ class ShaderProg{
 				fShaderFile.close();
 				vertexCode = vShaderStream.str();
 				fragmentCode = fShaderStream.str();
-			} catch(std::ifstream::failure e){
+			} catch(std::ifstream::failure& e){
 				std::cout << "ERROR: Reading shader files failed:\n" << e.what() << std::endl;
 			}
 
