@@ -149,12 +149,6 @@ int main(int argv, char* argc[]){
 	rotat = glm::rotate(rotat, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
 	rotat = glm::scale(rotat, glm::vec3(0.5, 0.5, 0.5));
 
-	unsigned int transformLoc = glGetUniformLocation(shaderProg.ID, "transform");
-	glUniformMatrix4fv(transformLoc, //The uniform's location
-			1, //Number of matrices
-			GL_FALSE, //Whether we should transpose the matrix
-		       	glm::value_ptr(rotat)); //Actual data, converted from GLM to OpenGL format via value_ptr.
-
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
@@ -163,6 +157,18 @@ int main(int argv, char* argc[]){
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		shaderProg.use();
+
+		//Rotation:
+		glm::mat4 rotator = glm::mat4(1.0f);
+		rotator = glm::translate(rotator, glm::vec3(0.5f, -0.5f, 0.0f));
+		rotator = glm::rotate(rotator, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+		//Remember that the matrices are applied in reverse order, so this rotates before
+		//it translates.
+		unsigned int transformLoc = glGetUniformLocation(shaderProg.ID, "transform");
+		glUniformMatrix4fv(transformLoc, //The uniform's location
+				1, //Number of matrices
+				GL_FALSE, //Whether we should transpose the matrix
+				glm::value_ptr(rotator)); //Actual data, converted from GLM to OpenGL format via value_ptr.
 
 		/* float timeValue = glfwGetTime(); */
 		/* float b = sin(timeValue)/2.0f + 0.5f; */
