@@ -24,8 +24,11 @@ int main(int argv, char* argc[]){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	const int width = 2560;
+	const int height = 1440;
+
 	//Set up viewport
-	GLFWwindow* window = setupWindow(0, 0, 1440, 2560, "Magic Portal");
+	GLFWwindow* window = setupWindow(0, 0, width, height, "Magic Portal");
 	if(window == NULL){
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
