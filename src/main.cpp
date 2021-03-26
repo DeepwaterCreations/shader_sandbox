@@ -11,7 +11,7 @@
 #include "stb_image.h"
 
 #include "shaderprog.h"
-#include "rectangle.h"
+#include "cube.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -39,8 +39,8 @@ int main(int argv, char* argc[]){
 	unsigned int texture0 = loadTextures("textures/bluegrad.png");
 	unsigned int texture1 = loadTextures("textures/mead_notebook_overlay.png");
 
-	//Make a rectangle to show textures on
-	Rectangle rectangle;
+	//Make a cube to show textures on
+	Cube cube;
 
 	//Load shader program
 	ShaderProg shaderProg("/lair/ColdThings/shader_sandbox/src/shaders/vertex.glsl", "/lair/ColdThings/shader_sandbox/src/shaders/fragment.glsl");
@@ -48,19 +48,23 @@ int main(int argv, char* argc[]){
 	shaderProg.setInt("texture0", 0);
 	shaderProg.setInt("texture1", 1);
 
+	//Use depth testing
+	glEnable(GL_DEPTH_TEST);
+
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shaderProg.use();
 
 		//Model matrix: Object space => World space
-		//We're laying the rectangle down on the ground.
 		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, 
+				(float)glfwGetTime() * glm::radians(50.0f),
+			       	glm::vec3(0.5f, 1.0f, 0.0f));
 		unsigned int modelMatrixLoc = glGetUniformLocation(shaderProg.ID, "modelMatrix");
 		glUniformMatrix4fv(modelMatrixLoc, //The uniform's location
 				1, //Number of matrices
@@ -84,8 +88,9 @@ int main(int argv, char* argc[]){
 		glBindTexture(GL_TEXTURE_2D, texture0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture1);
-		glBindVertexArray(rectangle.VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
+		glBindVertexArray(cube.VAO);
+		/* glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset */
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
