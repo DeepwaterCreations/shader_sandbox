@@ -48,18 +48,6 @@ int main(int argv, char* argc[]){
 	shaderProg.setInt("texture0", 0);
 	shaderProg.setInt("texture1", 1);
 
-	//Vectors and Matrices in GLM:
-	//Translation:
-	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);	
-	glm::mat4 trans = glm::mat4(1.0f); //<- Initializes the diagonal so it's an identity matrix
-	trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
-	vec = trans * vec;
-	std::cout << vec.x << vec.y << vec.z << std::endl;
-	//Rotation:
-	glm::mat4 rotat = glm::mat4(1.0f);
-	rotat = glm::rotate(rotat, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-	rotat = glm::scale(rotat, glm::vec3(0.5, 0.5, 0.5));
-
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
