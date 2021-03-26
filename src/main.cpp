@@ -24,11 +24,11 @@ int main(int argv, char* argc[]){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	const int width = 2560;
-	const int height = 1440;
+	const int WIDTH = 2560;
+	const int HEIGHT = 1440;
 
 	//Set up viewport
-	GLFWwindow* window = setupWindow(0, 0, width, height, "Magic Portal");
+	GLFWwindow* window = setupWindow(0, 0, WIDTH, HEIGHT, "Magic Portal");
 	if(window == NULL){
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -88,7 +88,7 @@ int main(int argv, char* argc[]){
 
 		//Projection matrix: Camera space => Clip space
 		glm::mat4 projectionMatrix;
-		projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f); //FOV, aspect ratio, near clipping, far clipping
+		projectionMatrix = glm::perspective(glm::radians(45.0f), (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f); //FOV, aspect ratio, near clipping, far clipping
 		unsigned int projectionMatrixLoc = glGetUniformLocation(shaderProg.ID, "projectionMatrix");
 		glUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
