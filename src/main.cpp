@@ -11,127 +11,35 @@
 #include "stb_image.h"
 
 #include "shaderprog.h"
+#include "rectangle.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+GLFWwindow* setupWindow(int x, int y, int width, int height, const char* title);
+unsigned int loadTextures(const char* filepath);
 
 int main(int argv, char* argc[]){
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
 
-	//Make a window
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Magic Portal", NULL, NULL);
+	//Set up viewport
+	GLFWwindow* window = setupWindow(0, 0, 1440, 2560, "Magic Portal");
 	if(window == NULL){
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
-	glfwMakeContextCurrent(window);
-
-
-	//Set up viewport
-	glViewport(0,0,800,600);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	
-	//Load a texture using the stb_image library and put it in an OpenGL texture
-	unsigned int texture0;
-	glGenTextures(1, &texture0);
-	glBindTexture(GL_TEXTURE_2D, texture0);
+	//Load textures
+	unsigned int texture0 = loadTextures("textures/bluegrad.png");
+	unsigned int texture1 = loadTextures("textures/mead_notebook_overlay.png");
 
-	//Set texture wrapping/filtering options
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
+	//Make a rectangle to show textures on
+	Rectangle rectangle;
 
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load("textures/bluegrad.png", &width, &height, &nrChannels, 0);
-	if(data){
-		glTexImage2D(GL_TEXTURE_2D, //Texture target
-				0, //Mipmap level for if you want to do those manually. (instead of that, we generate them below.)
-				GL_RGB, //Texture storage format
-				width, //We got the width and height values from the image
-				height,//when we loaded it above, so we're using those.
-				0, //Always 0. Legacy thingy.
-				GL_RGB, //Source image format
-				GL_UNSIGNED_BYTE, //Source image data type
-				data); //The actual image data
-		glGenerateMipmap(GL_TEXTURE_2D);
-	} else {
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data); //We're done with the loaded image file now.
-
-	//Second texture:
-	unsigned int texture1;
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
-	data = stbi_load("textures/mead_notebook_overlay.png", &width, &height, &nrChannels, 0);
-	if(data){
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	} else {
-		std::cout << "Failed to load texture" << std::endl;
-	}
-
-
-	//A Vertex Array Object: Keeps track of some state for us so we can
-	//	easily draw our rectangle more than once.
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO); //Bind it so we can put the forthcoming triangle in it.
-				//As long as it's bound, it'll remember the VBO and EBO stuff we define.
-
-	//A simple rectangle made of two triangles
-	float vertices[] = {
-		//positions	     //colors           //texture coordinates
-		 0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, //Top right
-		 0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 	1.0f, 0.0f, 
-		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f
-	};
-	unsigned int VBO; // A vertex buffer object id
-	glGenBuffers(1, &VBO);
-	//Send the data to our buffer
-	glBindBuffer(GL_ARRAY_BUFFER, VBO); //Bind our buffer to GL_ARRAY_BUFFER.
-	//Copy the vertex data to the buffer currently bound to GL_ARRAY_BUFFER:
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //GL_DYNAMIC_DRAW if we expect this to change a lot.
-	//Specify the format of our vertex data
-	//Position attribute
-	glVertexAttribPointer(0, //Location of starting attribute
-			3, //Size of a vertex attribute: 3 values for x, y, z
-			GL_FLOAT, //Type of the data
-		       	GL_FALSE, //Does the data need to be converted to floats?
-		       	8 * sizeof(float), //Stride: The space between consecutive vertex attributes
-		       	(void*)0); //Offset of where data begins in the buffer
-	glEnableVertexAttribArray(0);
-	//Color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
-	glEnableVertexAttribArray(1);
-	//Texture coord attribute
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	//But how do we break the rectangle up into triangles? Like this:
-	unsigned int indices[] = {
-		0, 1, 3,
-		1, 2, 3
-	};
-	unsigned int EBO; //An Element Buffer Object tells us which of the VBO vertices to draw in what order.
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	// Here we can unbind our VAO and make + bind the next one if we have more objects.
-
-
+	//Load shader program
 	ShaderProg shaderProg("/lair/ColdThings/shader_sandbox/src/shaders/vertex.glsl", "/lair/ColdThings/shader_sandbox/src/shaders/fragment.glsl");
 	shaderProg.use();
 	shaderProg.setInt("texture0", 0);
@@ -180,7 +88,7 @@ int main(int argv, char* argc[]){
 		glBindTexture(GL_TEXTURE_2D, texture0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture1);
-		glBindVertexArray(VAO);
+		glBindVertexArray(rectangle.VAO);
 		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
 		glBindVertexArray(0);
@@ -189,9 +97,6 @@ int main(int argv, char* argc[]){
 		glfwSwapBuffers(window);
 	}
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 
 
 	glfwTerminate();
@@ -207,4 +112,45 @@ void processInput(GLFWwindow* window){
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
 		glfwSetWindowShouldClose(window, true);
 	}
+}
+
+GLFWwindow* setupWindow(int x, int y, int width, int height, const char* title){
+	GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+	glfwMakeContextCurrent(window);
+	glViewport(x, y, width, height);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	return window;
+}
+
+unsigned int loadTextures(const char* filepath){
+	//Load a texture using the stb_image library and put it in an OpenGL texture
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//Set texture wrapping/filtering options
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //MAG for magnification
+
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(filepath, &width, &height, &nrChannels, 0);
+	if(data){
+		glTexImage2D(GL_TEXTURE_2D, //Texture target
+				0, //Mipmap level for if you want to do those manually. (instead of that, we generate them below.)
+				GL_RGB, //Texture storage format
+				width, //We got the width and height values from the image
+				height,//when we loaded it above, so we're using those.
+				0, //Always 0. Legacy thingy.
+				GL_RGB, //Source image format
+				GL_UNSIGNED_BYTE, //Source image data type
+				data); //The actual image data
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data); //We're done with the loaded image file now.
+	return texture;	
 }
