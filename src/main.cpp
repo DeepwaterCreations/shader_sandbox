@@ -17,15 +17,28 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 GLFWwindow* setupWindow(int x, int y, int width, int height, const char* title);
 unsigned int loadTextures(const char* filepath);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+const int WIDTH = 2560;
+const int HEIGHT = 1440;
+
+//Camera
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+float pitch;
+float yaw = -90.0f; //Default to the camera pointing toward the negative Z axis
+bool firstMouse = true; //Flag to detect when the cursor first enters the window
+float mouseLastX = WIDTH/2, mouseLastY = HEIGHT/2;
+
+float dTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main(int argv, char* argc[]){
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	const int WIDTH = 2560;
-	const int HEIGHT = 1440;
 
 	//Set up viewport
 	GLFWwindow* window = setupWindow(0, 0, WIDTH, HEIGHT, "Magic Portal");
@@ -34,6 +47,9 @@ int main(int argv, char* argc[]){
 		glfwTerminate();
 		return -1;
 	}
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
 	
 	//Load textures
 	unsigned int texture0 = loadTextures("textures/bluegrad.png");
@@ -63,23 +79,12 @@ int main(int argv, char* argc[]){
 	//Use depth testing
 	glEnable(GL_DEPTH_TEST);
 
-	//Camera
-	/* glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f); */
-	/* glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); */
-	/* glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); //Technically the reverse of the direction */
-	/* glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); */
-	/* glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection)); */
-	/* glm::vec3 cameraUp = glm::normalize(glm::cross(cameraDirection, cameraRight)); */
-	//Apparently, this is the Gram-Schmidt process in Linear Algebra.
-	
-	/* glm::mat4 viewMatrix; */
-	/* viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), //Camera pos */
-  			         /* glm::vec3(0.0f, 0.0f, 0.0f), //Target pos */
-	/* 		         glm::vec3(0.0f, 1.0f, 0.0f)); //Up in world space */
-
-
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
+		float currentFrame = glfwGetTime();
+		dTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		processInput(window);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -91,13 +96,8 @@ int main(int argv, char* argc[]){
 		//Defined below at draw step
 		//View matrix: World space => Camera space
 		//"To move a camera backwards, is the same as moving the entire scene forward."
-		const float radius = 10.0f;
-		float camX = sin(glfwGetTime()) * radius;
-		float camZ = cos(glfwGetTime()) * radius;
 		glm::mat4 viewMatrix;
-		viewMatrix = glm::lookAt(glm::vec3(camX, 0.0, camZ),
-				         glm::vec3(0.0, 0.0, 0.0),
-					 glm::vec3(0.0, 1.0, 0.0));
+		viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		unsigned int viewMatrixLoc = glGetUniformLocation(shaderProg.ID, "viewMatrix");
 		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
@@ -140,6 +140,21 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 }
 
 void processInput(GLFWwindow* window){
+	float cameraSpeed = 2.5f * dTime;
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+		cameraPos += cameraSpeed * cameraFront;
+	}
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+		cameraPos -= cameraSpeed * cameraFront;
+	}
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	}
+
+
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -184,4 +199,40 @@ unsigned int loadTextures(const char* filepath){
 	}
 	stbi_image_free(data); //We're done with the loaded image file now.
 	return texture;	
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+	//Prevent a big jump when the cursor enters the window
+	if(firstMouse){
+		mouseLastX = xpos;
+		mouseLastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - mouseLastX;
+	float yoffset = mouseLastY - ypos;
+	mouseLastX = xpos;
+	mouseLastY = ypos;
+
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	//Don't allow the camera to flip over backwards or forwards
+	if(pitch > 89.0f) pitch = 89.0f;
+	if(pitch < -89.0f) pitch = -89.0f;
+
+	glm::vec3 direction;
+	//The math: Treat our facing direction as the hypotenuse of a right triangle,
+	//	and also suppose it's a normal vector with length 1.
+	//	Since the hypotenuse is 1, len(x) = cos theta and len(y) = sin theta.
+	//	("adjacent/hypotenuse" becomes "adjacent/1" becomes "adjacent", and so forth)
+	//	We have to consider both pitch and yaw, though.
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
 }
