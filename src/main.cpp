@@ -63,6 +63,21 @@ int main(int argv, char* argc[]){
 	//Use depth testing
 	glEnable(GL_DEPTH_TEST);
 
+	//Camera
+	/* glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f); */
+	/* glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); */
+	/* glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget); //Technically the reverse of the direction */
+	/* glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f); */
+	/* glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection)); */
+	/* glm::vec3 cameraUp = glm::normalize(glm::cross(cameraDirection, cameraRight)); */
+	//Apparently, this is the Gram-Schmidt process in Linear Algebra.
+	
+	/* glm::mat4 viewMatrix; */
+	/* viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), //Camera pos */
+  			         /* glm::vec3(0.0f, 0.0f, 0.0f), //Target pos */
+	/* 		         glm::vec3(0.0f, 1.0f, 0.0f)); //Up in world space */
+
+
 	//Render Loop
 	while(!glfwWindowShouldClose(window)){
 		processInput(window);
@@ -76,8 +91,13 @@ int main(int argv, char* argc[]){
 		//Defined below at draw step
 		//View matrix: World space => Camera space
 		//"To move a camera backwards, is the same as moving the entire scene forward."
-		glm::mat4 viewMatrix = glm::mat4(1.0f);
-		viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
+		const float radius = 10.0f;
+		float camX = sin(glfwGetTime()) * radius;
+		float camZ = cos(glfwGetTime()) * radius;
+		glm::mat4 viewMatrix;
+		viewMatrix = glm::lookAt(glm::vec3(camX, 0.0, camZ),
+				         glm::vec3(0.0, 0.0, 0.0),
+					 glm::vec3(0.0, 1.0, 0.0));
 		unsigned int viewMatrixLoc = glGetUniformLocation(shaderProg.ID, "viewMatrix");
 		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
