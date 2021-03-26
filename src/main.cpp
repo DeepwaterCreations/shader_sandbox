@@ -69,30 +69,34 @@ int main(int argv, char* argc[]){
 
 		shaderProg.use();
 
-		//Rotation:
-		glm::mat4 rotator = glm::mat4(1.0f);
-		rotator = glm::translate(rotator, glm::vec3(0.5f, -0.5f, 0.0f));
-		rotator = glm::rotate(rotator, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-		//Remember that the matrices are applied in reverse order, so this rotates before
-		//it translates.
-		unsigned int transformLoc = glGetUniformLocation(shaderProg.ID, "transform");
-		glUniformMatrix4fv(transformLoc, //The uniform's location
+		//Model matrix: Object space => World space
+		//We're laying the rectangle down on the ground.
+		glm::mat4 modelMatrix = glm::mat4(1.0f);
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		unsigned int modelMatrixLoc = glGetUniformLocation(shaderProg.ID, "modelMatrix");
+		glUniformMatrix4fv(modelMatrixLoc, //The uniform's location
 				1, //Number of matrices
 				GL_FALSE, //Whether we should transpose the matrix
-				glm::value_ptr(rotator)); //Actual data, converted from GLM to OpenGL format via value_ptr.
+				glm::value_ptr(modelMatrix)); //Actual data, converted from GLM to OpenGL format via value_ptr.
+		
+		//View matrix: World space => Camera space
+		//"To move a camera backwards, is the same as moving the entire scene forward."
+		glm::mat4 viewMatrix = glm::mat4(1.0f);
+		viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
+		unsigned int viewMatrixLoc = glGetUniformLocation(shaderProg.ID, "viewMatrix");
+		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-		/* float timeValue = glfwGetTime(); */
-		/* float b = sin(timeValue)/2.0f + 0.5f; */
-		/* shaderProg.setFloat("someColor", 1.0f); */
-		/* int vertexColorLocation = glGetUniformLocation(shaderProgram, "someColor"); */
-		/* glUniform4f(vertexColorLocation, 0.0f, b, 0.0f, 1.0f); */
+		//Projection matrix: Camera space => Clip space
+		glm::mat4 projectionMatrix;
+		projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 100.0f); //FOV, aspect ratio, near clipping, far clipping
+		unsigned int projectionMatrixLoc = glGetUniformLocation(shaderProg.ID, "projectionMatrix");
+		glUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glBindVertexArray(rectangle.VAO);
-		/* glDrawArrays(GL_TRIANGLES, 0, 3); //Primitive type, starting index, number of vertices */
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset
 		glBindVertexArray(0);
 
