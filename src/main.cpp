@@ -39,7 +39,19 @@ int main(int argv, char* argc[]){
 	unsigned int texture0 = loadTextures("textures/bluegrad.png");
 	unsigned int texture1 = loadTextures("textures/mead_notebook_overlay.png");
 
-	//Make a cube to show textures on
+	//Make a whole bunch of cubes
+	glm::vec3 cubePositions[] ={
+		glm::vec3( 0.0f,  0.0f,  0.0f),
+		glm::vec3( 2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3( 2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3( 1.3f, -2.0f, -2.5f),
+		glm::vec3( 1.5f,  2.0f, -2.5f),
+		glm::vec3( 1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 	Cube cube;
 
 	//Load shader program
@@ -61,16 +73,7 @@ int main(int argv, char* argc[]){
 		shaderProg.use();
 
 		//Model matrix: Object space => World space
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::rotate(modelMatrix, 
-				(float)glfwGetTime() * glm::radians(50.0f),
-			       	glm::vec3(0.5f, 1.0f, 0.0f));
-		unsigned int modelMatrixLoc = glGetUniformLocation(shaderProg.ID, "modelMatrix");
-		glUniformMatrix4fv(modelMatrixLoc, //The uniform's location
-				1, //Number of matrices
-				GL_FALSE, //Whether we should transpose the matrix
-				glm::value_ptr(modelMatrix)); //Actual data, converted from GLM to OpenGL format via value_ptr.
-		
+		//Defined below at draw step
 		//View matrix: World space => Camera space
 		//"To move a camera backwards, is the same as moving the entire scene forward."
 		glm::mat4 viewMatrix = glm::mat4(1.0f);
@@ -89,8 +92,16 @@ int main(int argv, char* argc[]){
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture1);
 		glBindVertexArray(cube.VAO);
+		for(int i = 0; i < 10; i++){
+			glm::mat4 modelMatrix = glm::mat4(1.0f);
+			modelMatrix = glm::translate(modelMatrix, cubePositions[i]);
+			float angle = 20.0f * i;
+			modelMatrix = glm::rotate(modelMatrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			shaderProg.setMat4("modelMatrix", modelMatrix);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 		/* glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //Primitive type, number of elements, index type, offset */
-		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
